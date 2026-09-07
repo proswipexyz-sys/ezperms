@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EZPERM — Docs</title>
+<style>
+  :root{
+    --bg: #0a0a0a;
+    --bg-glow: radial-gradient(ellipse 900px 500px at 50% -10%, rgba(139,0,20,0.18), transparent 60%);
+    --panel: #131111;
+    --panel-border: #332627;
+    --panel-border-hover: #5a2a2e;
+    --text: #ffffff;
+    --text-dim: #c7bcbc;
+    --text-faint: #8f8080;
+    --accent: #e0324a;
+    --accent-soft: rgba(224,50,74,0.14);
+    --sidebar-w: 290px;
+    --header-h: 64px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg-glow), var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", Roboto, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  a{ color: inherit; text-decoration: none; }
+
+  /* ---------- Header ---------- */
+  header{
+    height: var(--header-h);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--panel-border);
+    position: sticky;
+    top:0;
+    background: rgba(10,10,10,0.9);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:0.2px;
+  }
+  .brand svg{ width:23px; height:23px; flex-shrink:0; }
+
+  /* ---------- Layout ---------- */
+  .shell{
+    display:flex;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Sidebar ---------- */
+  aside.sidebar{
+    width: var(--sidebar-w);
+    flex-shrink:0;
+    padding: 28px 14px 40px;
+    position: sticky;
+    top: var(--header-h);
+    height: calc(100vh - var(--header-h));
+    overflow-y:auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+  aside.sidebar::-webkit-scrollbar{ width:6px; }
+  aside.sidebar::-webkit-scrollbar-track{ background:transparent; }
+  aside.sidebar::-webkit-scrollbar-thumb{ background: var(--accent); border-radius:3px; }
+  aside.sidebar::-webkit-scrollbar-thumb:hover{ background:#ff4a63; }
+  .search-box{
+    display:flex; align-items:center; gap:8px;
+    background: var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:10px 12px;
+    margin: 0 8px 22px;
+    color: var(--text-faint);
+    font-size:14px;
+  }
+  .search-box svg{ width:15px; height:15px; flex-shrink:0; }
+  .nav-group{ margin-bottom: 10px; }
+  .nav-group-title{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color: var(--text-faint);
+    padding: 14px 18px 6px;
+    font-weight:700;
+  }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: 11px 18px;
+    margin: 2px 6px;
+    border-radius:8px;
+    font-size:14.5px;
+    color: var(--text-dim);
+    cursor:pointer;
+    border-left:2px solid transparent;
+    transition: background .12s ease, color .12s ease;
+  }
+  .nav-item svg{ width:16px; height:16px; flex-shrink:0; opacity:.85; }
+  .nav-item:hover{ background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active{
+    background: var(--accent-soft);
+    color: var(--text);
+    border-left-color: var(--accent);
+    font-weight:600;
+  }
+
+  /* Collapsible category */
+  .nav-category{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 11px 18px;
+    margin: 2px 6px;
+    border-radius:8px;
+    font-size:14.5px;
+    font-weight:600;
+    color: var(--text);
+    cursor:pointer;
+    transition: background .12s ease;
+  }
+  .nav-category:hover{ background: rgba(255,255,255,0.04); }
+  .nav-category .cat-left{ display:flex; align-items:center; gap:10px; }
+  .nav-category svg.cat-icon{ width:16px; height:16px; opacity:.85; }
+  .nav-category svg.chev{ width:14px; height:14px; color: var(--text-faint); transition: transform .2s ease; flex-shrink:0; }
+  .nav-category.open svg.chev{ transform: rotate(180deg); }
+  .nav-subitems{
+    max-height:0;
+    overflow:hidden;
+    transition: max-height .25s ease;
+  }
+  .nav-category.open + .nav-subitems{ max-height: 260px; }
+  .nav-subitems .nav-item{ padding-left: 40px; font-size:14px; }
+
+  /* ---------- Main content ---------- */
+  main{
+    flex:1;
+    min-width:0;
+    padding: 48px 64px 110px;
+  }
+  .doc-page{ display:none; max-width: 860px; }
+  .doc-page.active{ display:block; animation: fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .eyebrow{
+    font-size:12.5px; color:var(--accent); font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px;
+  }
+  h1.page-title{
+    font-size: 38px; margin:0 0 14px; font-weight:800; letter-spacing:-.01em;
+  }
+  p.page-lead{
+    color: var(--text-dim); font-size:16.5px; line-height:1.75; margin: 0 0 38px;
+  }
+  h2.section-title{
+    font-size:21px; font-weight:700; margin: 38px 0 14px;
+    padding-bottom:9px; border-bottom:1px solid var(--panel-border);
+  }
+  p, li{ color: var(--text-dim); font-size:16px; line-height:1.85; }
+  ol, ul{ padding-left: 22px; margin: 10px 0; }
+  li{ margin-bottom:8px; }
+  li::marker{ color: var(--accent); }
+  code, .inline-code{
+    background: var(--panel); border:1px solid var(--panel-border);
+    padding:2px 7px; border-radius:5px; font-size:14px; color:#ff9aa6;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+  .callout{
+    display:flex; gap:12px;
+    background: var(--panel); border:1px solid var(--panel-border);
+    border-left: 3px solid var(--accent);
+    border-radius:8px; padding:16px 18px; margin: 20px 0;
+    font-size:15px; color: var(--text-dim);
+  }
+  .callout svg{ width:19px; height:19px; flex-shrink:0; color:var(--accent); margin-top:1px; }
+  .callout strong{ color: var(--text); }
+  .callout.warn{ border-left-color:#f0a83a; }
+  .callout.warn svg{ color:#f0a83a; }
+
+  .faq{
+    border:1px solid var(--panel-border); border-radius:10px;
+    overflow:hidden; margin: 20px 0;
+  }
+  .faq-item{ border-bottom:1px solid var(--panel-border); }
+  .faq-item:last-child{ border-bottom:none; }
+  .faq-question{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:16px 18px; background:var(--panel);
+    font-weight:700; font-size:15.5px; color:var(--text); cursor:pointer;
+    transition: background .12s ease;
+  }
+  .faq-question:hover{ background: rgba(255,255,255,0.04); }
+  .faq-question svg{ width:14px; height:14px; color:var(--text-faint); transition: transform .2s ease; flex-shrink:0; }
+  .faq-item.open .faq-question svg{ transform: rotate(180deg); }
+  .faq-answer{ max-height:0; overflow:hidden; transition: max-height .25s ease; background:var(--panel); }
+  .faq-item.open .faq-answer{ max-height: 500px; }
+  .faq-answer-inner{ padding:0 18px 18px; }
+  .faq-answer-inner p{ margin:0 0 12px; }
+  .faq-answer-inner p:last-child{ margin-bottom:0; }
+
+  .card-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin: 18px 0 8px;
+  }
+  .card{
+    background: var(--panel); border:1px solid var(--panel-border);
+    border-radius:10px; padding:16px 18px; transition: border-color .15s ease, transform .15s ease;
+    cursor:pointer;
+  }
+  .card:hover{ border-color: var(--panel-border-hover); transform: translateY(-2px); }
+  .card-title{ font-size:15px; font-weight:700; margin-bottom:5px; display:flex; align-items:center; gap:8px;}
+  .card-title svg{ width:16px; height:16px; color: var(--accent); }
+  .card-desc{ font-size:13.5px; color: var(--text-faint); line-height:1.6; }
+
+  .welcome-emoji{ font-size:44px; margin-bottom:10px; }
+
+  .prev-next{
+    display:flex; justify-content:space-between; margin-top:56px;
+    padding-top:20px; border-top:1px solid var(--panel-border);
+  }
+  .pn-link{ font-size:13px; color: var(--text-faint); }
+  .pn-link .pn-label{ display:block; font-size:11px; margin-bottom:3px; }
+  .pn-link .pn-name{ color: var(--text); font-weight:600; font-size:14.5px; }
+  .pn-link:hover .pn-name{ color: var(--accent); }
+
+  @media (max-width: 900px){
+    aside.sidebar{ display:none; }
+    main{ padding: 28px 20px 80px; }
+    .card-grid{ grid-template-columns: 1fr; }
+  }
+
+  .video-link{
+    display:inline-flex; align-items:center; gap:8px;
+    background: var(--panel); border:1px solid var(--panel-border);
+    border-radius:8px; padding:10px 14px; margin-top:8px;
+    font-size:14px; font-weight:600; color: var(--text);
+    transition: border-color .12s ease;
+  }
+  .video-link:hover{ border-color: var(--accent); color: var(--accent); }
+  .video-link svg{ width:16px; height:16px; color: var(--accent); flex-shrink:0; }
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal{
+    opacity:0;
+    transform: translateY(28px);
+    transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);
+    will-change: opacity, transform;
+  }
+  .reveal.visible{
+    opacity:1;
+    transform:none;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ transition:none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L21 6.5V13C21 17.5 17.5 21.2 12 22C6.5 21.2 3 17.5 3 13V6.5L12 2Z" stroke="#e0324a" stroke-width="1.6" fill="rgba(224,50,74,0.15)"/><path d="M8.5 12.5L11 15L15.5 9.5" stroke="#e0324a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    EZPERM — Docs
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      ドキュメントを検索…
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">はじめに</div>
+      <div class="nav-item active" data-page="welcome">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 12H3M9 6l-6 6 6 6"/><path d="M14 6h7v12h-7"/></svg>
+        👋 ようこそ！
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-item" data-page="install">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        セットアップガイド
+      </div>
+      <div class="nav-item" data-page="important-notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        重要注意事項
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-category" data-cat="fix-tab">
+        <span class="cat-left">
+          <svg class="cat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.1 2.1-2.6-.6-.6-2.6z"/></svg>
+          修正
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="nav-subitems">
+        <div class="nav-item" data-page="error-fix">エラー修正</div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- Welcome -->
+    <section class="doc-page active" id="page-welcome">
+      <div class="eyebrow">Docs / はじめに</div>
+      <div class="welcome-emoji">👋</div>
+      <h1 class="page-title">EZPERMへようこそ！</h1>
+      <p class="page-lead">EZPERM ドキュメントサイトです。完全なセットアップおよびSpoof手順は左メニューから確認してください。</p>
+
+      <div class="card-grid">
+        <div class="card" data-goto="install">
+          <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>セットアップガイド</div>
+          <div class="card-desc">OS再インストール・BIOSFlash・SPOOF実行手順。</div>
+        </div>
+        <div class="card" data-goto="important-notes">
+          <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>重要注意事項</div>
+          <div class="card-desc">作業前に必ず確認してください。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- インストール (セットアップガイド) -->
+    <section class="doc-page" id="page-install">
+      <div class="eyebrow">Docs</div>
+      <h1 class="page-title">セットアップガイド</h1>
+      <p class="page-lead">EZPERMのセットアップおよびSPOOF実行手順です。</p>
+
+      <div class="callout warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <div>
+          <strong>(必須) BIOSFLASHを行ってください:</strong><br>
+          作業開始前に、マザーボードの <strong>BIOSFLASH（BIOSアップデート）を必ず事前に完了させてください。</strong>
+        </div>
+      </div>
+
+      <h2 class="section-title">1. Windows 10 再インストール</h2>
+      <p>USBメモリに Windows 10 をインストールしてください。</p>
+      <a class="video-link" href="https://proswipexyz-sys.github.io/newpermguid/" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Windows再インストール方法はこちら（「初めに」タブの「Windows再インストール」を参照）
+      </a>
+
+      <h2 class="section-title">2. SPOOFの手順</h2>
+      <a class="video-link" href="https://loader.cryptauth.net/" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        ローダーダウンロードはこちら (cryptauth.net)
+      </a>
+
+      <ol style="margin-top:16px;">
+        <li>上記のリンクからキーを入力してローダーをダウンロードします。</li>
+        <li>ローダーを開き、キーを入力してログインします。</li>
+        <li>ゲームに合わせて番号を選択します。
+          <ul>
+            <li>Vanguard（VALORANT等）を解除したい場合: <code>1</code> を入力</li>
+            <li>その他のゲーム（EAC系等）の場合: <code>3</code> を入力</li>
+          </ul>
+        </li>
+        <li>途中でポップアップ画面が表示されたら、<strong>「Agree」</strong> を押してください。</li>
+        <li>処理が完了したら、ゲームを起動してください。</li>
+      </ol>
+
+      <div class="prev-next">
+        <a class="pn-link" data-goto="welcome"><span class="pn-label">前へ</span><span class="pn-name">← ようこそ！</span></a>
+        <a class="pn-link" data-goto="important-notes" style="text-align:right;"><span class="pn-label">次へ</span><span class="pn-name">重要注意事項 →</span></a>
+      </div>
+    </section>
+
+    <!-- 重要注意事項 -->
+    <section class="doc-page" id="page-important-notes">
+      <div class="eyebrow">Docs</div>
+      <h1 class="page-title">重要注意事項</h1>
+      <p class="page-lead">トラブル防止のため必ずお読みください。</p>
+
+      <div class="callout warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <div>
+          <ul style="margin:0;">
+            <li><strong>BIOSFLASHの事前実施:</strong> BIOSFLASHを行わずにSPOOFを実行すると、正常にシリアルが変更されない場合があります。</li>
+            <li><strong>ポップアップの選択:</strong> SPOOF途中のポップアップは必ず「Agree」を選択してください。キャンセルすると処理が途中で失敗します。</li>
+            <li><strong>新規アカウントの使用:</strong> バン履歴のある既存アカウントにはログインせず、必ず新しいアカウントを作成して起動してください。</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="prev-next">
+        <a class="pn-link" data-goto="install"><span class="pn-label">前へ</span><span class="pn-name">← セットアップガイド</span></a>
+        <a class="pn-link" data-goto="error-fix" style="text-align:right;"><span class="pn-label">次へ</span><span class="pn-name">エラー修正 →</span></a>
+      </div>
+    </section>
+
+    <!-- エラー修正 -->
+    <section class="doc-page" id="page-error-fix">
+      <div class="eyebrow">Docs / 修正</div>
+      <h1 class="page-title">エラー修正</h1>
+      <p class="page-lead">トラブル時の確認事項です。</p>
+
+      <div class="faq">
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>SPOOF後に解除されない / シリアルが変わらない</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p>事前準備としてBIOSFLASHが完了しているか、Windows 10の再インストールガイド通りにクリーンインストールされたかをご確認ください。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prev-next">
+        <a class="pn-link" data-goto="important-notes"><span class="pn-label">前へ</span><span class="pn-name">← 重要注意事項</span></a>
+        <div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const clickable = document.querySelectorAll('.nav-item, .nav-category, [data-goto]');
+  const pages = document.querySelectorAll('.doc-page');
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+  function setupReveal(page){
+    page.querySelectorAll(':scope > *').forEach((el, i) => {
+      el.classList.add('reveal');
+      el.classList.remove('visible');
+      el.style.transitionDelay = Math.min(i, 6) * 60 + 'ms';
+      revealObserver.observe(el);
+    });
+  }
+
+  pages.forEach(setupReveal);
+
+  function showPage(name){
+    pages.forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+    document.querySelectorAll('.nav-item, .nav-category').forEach(el => {
+      el.classList.toggle('active', el.dataset.page === name);
+    });
+    const activePage = document.getElementById('page-' + name);
+    if(activePage) setupReveal(activePage);
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  clickable.forEach(el => {
+    el.addEventListener('click', (e) => {
+      const target = el.dataset.page || el.dataset.goto;
+      if(!target) return;
+      e.preventDefault();
+      showPage(target);
+    });
+  });
+
+  document.querySelectorAll('.nav-category').forEach(cat => {
+    cat.addEventListener('click', (e) => {
+      cat.classList.toggle('open');
+      if (cat.dataset.page) {
+        e.preventDefault();
+        showPage(cat.dataset.page);
+      }
+    });
+  });
+
+  document.querySelectorAll('.faq-question').forEach(q => {
+    q.addEventListener('click', () => {
+      q.closest('.faq-item').classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>
